@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/g8rswimmer/go-sfdc"
-	"github.com/g8rswimmer/go-sfdc/credentials"
+	"github.com/yankoyankov8/go-sfdc"
+	"github.com/yankoyankov8/go-sfdc/credentials"
 )
 
 // Session is the authentication response.  This is used to generate the

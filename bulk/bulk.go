@@ -3,7 +3,7 @@ package bulk
 import (
 	"errors"
 
-	"github.com/g8rswimmer/go-sfdc/session"
+	"github.com/yankoyankov8/go-sfdc/session"
 )
 
 const bulk2Endpoint = "/jobs/ingest"
