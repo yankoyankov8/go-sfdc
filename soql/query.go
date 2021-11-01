@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/ehtycuact/go-sfdc"
+	"github.com/yankoyankov8/go-sfdc"
 	"github.com/yankoyankov8/go-sfdc/session"
 )
 

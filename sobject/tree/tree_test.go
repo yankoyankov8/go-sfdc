@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ehtycuact/go-sfdc"
+	"github.com/yankoyankov8/go-sfdc"
 	"github.com/yankoyankov8/go-sfdc/session"
 )
 
