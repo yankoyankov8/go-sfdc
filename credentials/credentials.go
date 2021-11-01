@@ -27,10 +27,11 @@ type PasswordCredentials struct {
 }
 
 type JwtCredentials struct {
-	URL				string
-	ClientId 		string // the client id as defined in the connected app in SalesForce
-	ClientUsername 	string
-	ClientKey 		*rsa.PrivateKey  // the client RSA key uploaded for authentication in the ConnectedApp
+	URL            string
+	ClientId       string // the client id as defined in the connected app in SalesForce
+	ClientSecret   string // the client secret as defined in the connected app in SalesForce
+	ClientUsername string
+	ClientKey      *rsa.PrivateKey // the client RSA key uploaded for authentication in the ConnectedApp
 }
 
 // Credentials is the structure that contains all of the
@@ -48,13 +49,15 @@ type Credentials struct {
 type Provider interface {
 	Retrieve() (io.Reader, error)
 	URL() string
+	ClientId() string
+	ClientSecret() string
 }
 
 type grantType string
 
 const (
 	passwordGrantType grantType = "password"
-	jwtGrantType grantType = "urn:ietf:params:oauth:grant-type:jwt-bearer"
+	jwtGrantType      grantType = "urn:ietf:params:oauth:grant-type:jwt-bearer"
 )
 
 // Retrieve will return the reader for the HTTP request body.
@@ -65,6 +68,14 @@ func (creds *Credentials) Retrieve() (io.Reader, error) {
 // URL is the URL base for the session endpoint.
 func (creds *Credentials) URL() string {
 	return creds.provider.URL()
+}
+
+func (creds *Credentials) ClientId() string {
+	return creds.provider.ClientId()
+}
+
+func (creds *Credentials) ClientSecret() string {
+	return creds.provider.ClientSecret()
 }
 
 // NewCredentials will create a credential with the custom provider.
@@ -91,7 +102,9 @@ func NewPasswordCredentials(creds PasswordCredentials) (*Credentials, error) {
 
 // NewJWTCredentials weill create a credntial with all required info about generating a JWT claims parameter
 func NewJWTCredentials(creds JwtCredentials) (*Credentials, error) {
-	if err := validateJWTCredentials(creds); err != nil {return nil, err}
+	if err := validateJWTCredentials(creds); err != nil {
+		return nil, err
+	}
 	return &Credentials{
 		provider: &jwtProvider{
 			creds: creds,
@@ -125,6 +138,8 @@ func validateJWTCredentials(cred JwtCredentials) error {
 		return errors.New("client username cannot be empty")
 	case len(cred.ClientId) == 0:
 		return errors.New("client id cannot be empty")
+	case len(cred.ClientSecret) == 0:
+		return errors.New("client secret cannot be empty")
 	}
 	return nil
 

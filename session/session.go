@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/g8rswimmer/go-sfdc"
 	"github.com/g8rswimmer/go-sfdc/credentials"
@@ -153,4 +155,69 @@ func (session *Session) AuthorizationHeader(request *http.Request) {
 // Client returns the HTTP client to be used in APIs calls.
 func (session *Session) Client() *http.Client {
 	return session.config.Client
+}
+
+const introspectUrl = "/services/oauth2/introspect"
+
+type introspectCallResponse struct {
+	Active    bool   `json:"active"`
+	Exp       int    `json:"exp"`
+	Iat       int    `json:"iat"`
+	Nfb       int    `json:"nfb"`
+	Scope     string `json:"scope"`
+	Sub       string `json:"sub"`
+	TokenType string `json:"token_type"`
+	Username  string `json:"username"`
+}
+
+func sessionIntrospectRequest(session *Session) (*http.Request, error) {
+	// build request parameters from session
+	form := url.Values{}
+	form.Add("token", session.response.AccessToken)
+	form.Add("token_type_hint", "access_token")
+	form.Add("client_id", session.config.Credentials.ClientId())
+	form.Add("client_secret", session.config.Credentials.ClientSecret())
+	body := strings.NewReader(form.Encode())
+
+	// prepare the request url
+	requestUrl := session.InstanceURL() + introspectUrl
+
+	request, err := http.NewRequest(http.MethodPost, requestUrl, body)
+	if err != nil {
+
+		return nil, err
+	}
+
+	// add the headers as expected by SalesForce
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Add("Accept", "application/json")
+
+	return request, nil
+}
+
+func sessionIntrospectResponse(request *http.Request, client *http.Client) (*introspectCallResponse, error) {
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("session response error: %d %s", response.StatusCode, response.Status)
+	}
+	decoder := json.NewDecoder(response.Body)
+	defer response.Body.Close()
+	var sessionResponse introspectCallResponse
+	err = decoder.Decode(&sessionResponse)
+	return &sessionResponse, err
+}
+
+func (session *Session) IsActive() bool {
+	request, err := sessionIntrospectRequest(session)
+	if err != nil {
+		return false
+	}
+	response, err := sessionIntrospectResponse(request, session.Client())
+	if err != nil {
+		return false
+	}
+	return response.Active
 }

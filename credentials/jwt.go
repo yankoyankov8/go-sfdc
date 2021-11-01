@@ -2,11 +2,13 @@ package credentials
 
 import (
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"io"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 )
 
 const (
@@ -39,6 +41,14 @@ func (provider *jwtProvider) URL() string {
 	return provider.creds.URL
 }
 
+func (provider *jwtProvider) ClientId() string {
+	return provider.creds.ClientId
+}
+
+func (provider *jwtProvider) ClientSecret() string {
+	return provider.creds.ClientSecret
+}
+
 func (provider *jwtProvider) GetAppropriateExpirationTime() int64 {
 	return time.Now().Add(JwtExpiration).Unix()
 }
@@ -49,9 +59,9 @@ func (provider *jwtProvider) BuildClaimsToken(expirationTime int64, url string, 
 		StandardClaims: jwt.StandardClaims{
 			// In JWT, the expiry time is expressed as unix milliseconds
 			ExpiresAt: expirationTime,
-			Audience:  url,                  // "https://test.salesforce.com" || "https://login.salesforce.com"
-			Issuer:    clientId, // consumer key of the connected app, hardcoded
-			Subject:   clientUsername,                       // username of the salesforce user, whose profile is added to the connected app
+			Audience:  url,            // "https://test.salesforce.com" || "https://login.salesforce.com"
+			Issuer:    clientId,       // consumer key of the connected app, hardcoded
+			Subject:   clientUsername, // username of the salesforce user, whose profile is added to the connected app
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
